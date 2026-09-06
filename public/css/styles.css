@@ -1,0 +1,282 @@
+.menu-toggle {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.menu-toggle span {
+  width: 35px;
+  height: 4px;
+  background-color: #fff;
+  border-radius: 2px;
+  display: block;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #fafafa;
+}
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: #222;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  z-index: 1000;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.2);
+}
+
+.subTopbar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background-color: #333;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  z-index: 900;
+}
+
+.settings-toggle {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.brand {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.page-content {
+  margin-top: 60px;
+  padding: 24px;
+}
+
+
+.sidenav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  min-width: 260px;
+  max-width: 90vw;
+  width: max-content;
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+  background-color: #111;
+  overflow-x: hidden;
+  padding-top: 60px;
+  z-index: 990;
+}
+
+.sidenav.open {
+  transform: translateX(0);
+}
+
+/* The navigation menu links */
+.sidenav a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+/* When you mouse over the navigation links, change their color */
+.sidenav a:hover {
+  color: #f1f1f1;
+}
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 2000;
+}
+
+.settings-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.settings-panel {
+  width: min(560px, 100%);
+  background: #fff;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  color: #111;
+  position: relative;
+}
+
+.settings-panel h2 {
+  margin-top: 0;
+}
+
+.close-settings {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.settings-content {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.settings-content label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+
+.logout-form {
+  margin-top: 8px;
+}
+
+.logout-button {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background: #fecaca;
+}
+
+.settings-form {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.settings-field span {
+  font-weight: 600;
+}
+
+.settings-field small {
+  color: #6b7280;
+  font-size: 0.78rem;
+}
+
+.settings-field input {
+  width: 100%;
+  padding: 0.55rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.settings-save {
+  padding: 0.6rem;
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.settings-save:hover {
+  background: #1d4ed8;
+}
+
+.settings-status {
+  min-height: 1.1em;
+  font-size: 0.85rem;
+}
+
+.settings-status.ok {
+  color: #166534;
+}
+
+.settings-status.error {
+  color: #991b1b;
+}
+
+/* Danger zone (settings panel): the hard-reset control. Visually separated and
+   red-bordered so it cannot be mistaken for a routine setting. */
+.danger-zone {
+  margin-top: 20px;
+  padding: 12px;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  background: #fef2f2;
+}
+
+.danger-zone h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: #991b1b;
+}
+
+.danger-zone p {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  color: #7f1d1d;
+}
+
+.danger-button {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.danger-button:hover {
+  background: #b91c1c;
+}

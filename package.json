@@ -1,0 +1,36 @@
+{
+  "name": "sinka",
+  "version": "1.0.0",
+  "description": "Ein",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NiklasGr/Sinka.git"
+  },
+  "author": "Niklas Greif",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/NiklasGr/Sinka/issues"
+  },
+  "homepage": "https://github.com/NiklasGr/Sinka#readme",
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "ejs": "^5.0.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "express-session": "^1.19.0",
+    "fast-xml-parser": "^5.9.2",
+    "form-data": "^4.0.6",
+    "multer": "^2.2.0",
+    "node-fetch": "^2.6.7",
+    "oauth-1.0a": "^2.2.6",
+    "pdfjs-dist": "^4.10.38",
+    "pdfkit": "^0.19.1",
+    "pyodide": "^314.0.2",
+    "qrcode": "^1.5.4",
+    "session-file-store": "^1.5.0"
+  }
+}

@@ -1,0 +1,37 @@
+# systemd unit for the Sinka server.
+#
+# The app starts at boot and serves the login page immediately; the encrypted vault is
+# unlocked when the admin logs in (the app runs SINKA_UNLOCK_CMD). So this unit does NOT
+# wait for the mount. Data routes stay locked until the vault is mounted.
+#
+# Install:
+#   sudo cp deploy/sinka.service /etc/systemd/system/sinka.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now sinka
+#   journalctl -u sinka -f
+#
+# Configuration lives in <sinka-directory>/.env (loaded by the app).
+#
+# NOTE on hardening: because the app triggers the vault unlock via `sudo` and that mount
+# must be visible system-wide (to the file manager), this unit deliberately runs WITHOUT
+# a private mount namespace (no PrivateTmp/ProtectSystem/ProtectHome) and WITHOUT
+# NoNewPrivileges (sudo must be able to escalate). The narrow sudoers rule
+# (/etc/sudoers.d/sinka) limits what can be escalated.
+
+
+[Unit]
+Description=Sinka file management server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=<user>
+Group=<group>
+WorkingDirectory=<sinka-directory>
+ExecStart=/usr/bin/node index.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

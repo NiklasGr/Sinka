@@ -1,0 +1,125 @@
+<div class="subTopbar">
+  <button id="studip-btn" onclick="showContent('studip')">Stud.IP</button>
+  <button id="iserv-btn" onclick="showContent('iserv')">IServ</button>
+</div>
+
+<main class="default-content" id="default-content">
+  <h1>Dateisynchronisation</h1>
+  <p>Oben einen Reiter auswählen, um Inhalte der jeweiligen Quelle anzuzeigen.</p>
+</main>
+
+<main class="studip-content" id="studip-content" style="display: none;">
+  <h1>Stud.IP</h1>
+  <button onclick="authenticate('studip')">Anmelden</button>
+
+  <section class="sync-block">
+    <h2>Kurs zur Synchronisation hinzufügen</h2>
+    <select id="studip-course-select">
+      <option value="">Zum Laden der Kurse anmelden</option>
+    </select>
+    <button onclick="openFolderBrowser('studip')">Synchronisation einrichten</button>
+  </section>
+</main>
+
+<main class="iserv-content" id="iserv-content" style="display: none;">
+  <h1>IServ</h1>
+  <form class="iserv-login" onsubmit="iservLogin(event)">
+    <input id="iserv-username" placeholder="Benutzername (vorname.nachname)" autocomplete="username">
+    <input id="iserv-password" type="password" placeholder="Passwort" autocomplete="current-password">
+    <button type="submit">Verbinden</button>
+  </form>
+
+  <section class="sync-block">
+    <h2>Ordner zur Synchronisation hinzufügen</h2>
+    <select id="iserv-course-select">
+      <option value="">Zum Laden der Ordner verbinden</option>
+    </select>
+    <button onclick="openFolderBrowser('iserv')">Synchronisation einrichten</button>
+  </section>
+</main>
+
+<!-- Synced courses + Sync All are provider-agnostic (the registry spans providers). -->
+<section class="sync-block" id="synced-section">
+  <h2>Synchronisierte Kurse</h2>
+  <ul id="synced-courses-list" class="synced-list"></ul>
+  <button id="sync-all-btn" onclick="syncCourseFiles()">Alle synchronisieren</button>
+  <span id="sync-all-msg" class="sync-msg"></span>
+  <div id="sync-progress" class="sync-progress" style="display:none;">
+    <div class="sync-progress__track"><div id="sync-progress-fill" class="sync-progress__fill"></div></div>
+    <div id="sync-progress-label" class="sync-progress__label"></div>
+  </div>
+</section>
+
+<!-- Per-course outcome of the most recent manual sync run. -->
+<section class="sync-block" id="sync-results-section" style="display:none;">
+  <h2>Ergebnis der Synchronisation</h2>
+  <ul id="sync-results" class="sync-results"></ul>
+</section>
+
+<!-- ".conflicted" copies the engine kept when a file changed on both sides. -->
+<section class="sync-block" id="conflicts-section" style="display:none;">
+  <h2>Konflikte</h2>
+  <p class="conflicts-hint">Diese Dateien wurden auf beiden Seiten geändert. Unter dem
+  ursprünglichen Namen liegt jetzt die Server-Version; die lokale Version wurde als
+  „.conflicted“-Kopie aufbewahrt. Beide vergleichen und die Konfliktkopie nach der
+  Klärung löschen.</p>
+  <ul id="conflicts-list" class="conflicts-list"></ul>
+</section>
+
+<!-- Step 2: server-side folder browser for choosing a per-course sync folder -->
+<div id="folder-browser" class="folder-browser" style="display: none;">
+  <div class="folder-browser__panel">
+    <h3>Leeren Synchronisationsordner auswählen</h3>
+    <div id="folder-browser-path" class="folder-browser__path"></div>
+    <ul id="folder-browser-list" class="folder-browser__list"></ul>
+    <p id="folder-browser-note" class="folder-browser__note"></p>
+    <div class="folder-browser__actions">
+      <button onclick="createFolderHere()">Neuer Ordner</button>
+      <span style="flex: 1"></span>
+      <button onclick="closeFolderBrowser()">Abbrechen</button>
+      <button id="folder-browser-confirm" onclick="confirmFolder()" disabled>Diesen Ordner verwenden</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .sync-block { margin-top: 1.5rem; }
+  #studip-course-select, #iserv-course-select { min-width: 18rem; max-width: 100%; }
+  .synced-list li { margin-bottom: 0.35rem; }
+  .synced-list .last-sync { display: block; font-size: 0.78rem; color: #667; margin-left: 0.2rem; }
+  .synced-list .last-sync.error { color: #b00; }
+  .sync-msg { margin-left: 0.6rem; font-size: 0.85rem; color: #667; }
+  .sync-progress { margin-top: 0.6rem; max-width: 28rem; }
+  .sync-progress__track { height: 0.6rem; background: #eee; border-radius: 999px; overflow: hidden; }
+  .sync-progress__fill { height: 100%; width: 0; background: #2a8; transition: width 0.3s; }
+  .sync-progress__label { font-size: 0.78rem; color: #667; margin-top: 0.25rem; }
+  .sync-results { list-style: none; padding: 0; margin: 0; }
+  .sync-results li { padding: 0.3rem 0; font-size: 0.88rem; border-bottom: 1px solid #eee; }
+  .sync-results .ok { color: #070; }
+  .sync-results .error { color: #b00; }
+  .sync-results .skipped { color: #886; }
+  .conflicts-hint { font-size: 0.85rem; color: #555; max-width: 44rem; }
+  .conflicts-list { list-style: none; padding: 0; margin: 0; }
+  .conflicts-list li { padding: 0.45rem 0; border-bottom: 1px solid #eee; font-size: 0.88rem; }
+  .conflicts-list .conflict-name { font-family: monospace; word-break: break-all; }
+  .conflicts-list .conflict-meta { font-size: 0.78rem; color: #667; margin: 0.15rem 0 0.3rem; }
+  .conflicts-list button { margin-right: 0.4rem; }
+  .iserv-login { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .folder-browser {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
+    display: flex; align-items: center; justify-content: center; z-index: 1000;
+  }
+  .folder-browser__panel {
+    background: #fff; color: #111; width: min(40rem, 90vw); max-height: 80vh;
+    display: flex; flex-direction: column; padding: 1rem; border-radius: 8px;
+  }
+  .folder-browser__path { font-family: monospace; font-size: 0.85rem; word-break: break-all; margin-bottom: 0.5rem; }
+  .folder-browser__list { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; border: 1px solid #ddd; }
+  .folder-browser__list li { padding: 0.4rem 0.6rem; cursor: pointer; }
+  .folder-browser__list li:hover { background: #eef; }
+  .folder-browser__note { color: #b00; font-size: 0.85rem; min-height: 1.2em; margin: 0.4rem 0 0; }
+  .folder-browser__actions { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; }
+  .folder-browser__actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+
+<script src="/js/sync.js?v=<%= assetVersion %>"></script>

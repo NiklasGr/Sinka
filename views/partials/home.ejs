@@ -1,0 +1,151 @@
+<h1>Sinka</h1>
+<p>Status der synchronisierten Kurse, Upload-Sitzungen und des Speichers — alle Daten
+liegen im verschlüsselten Tresor.</p>
+
+<div class="hm-grid">
+  <section class="hm-card">
+    <h2>Synchronisierte Kurse <a class="hm-link" href="/sync">verwalten →</a></h2>
+    <ul id="hm-courses" class="hm-list"><li>Wird geladen…</li></ul>
+  </section>
+
+  <section class="hm-card">
+    <h2>Upload-Sitzungen <a class="hm-link" href="/admin-upload">verwalten →</a></h2>
+    <ul id="hm-sessions" class="hm-list"><li>Wird geladen…</li></ul>
+  </section>
+
+  <section class="hm-card">
+    <h2>Speicher &amp; Hintergrunddienste</h2>
+    <div id="hm-disk" class="hm-disk"></div>
+    <div class="hm-disk__track"><div id="hm-disk-fill" class="hm-disk__fill"></div></div>
+    <ul id="hm-jobs" class="hm-list"></ul>
+  </section>
+
+  <section class="hm-card hm-card--wide">
+    <h2>Sicherheit &amp; Vorfälle (Art. 33)</h2>
+    <p class="hm-hint">Die 72-Stunden-Frist für eine Meldung läuft ab dem Zeitpunkt, zu dem
+    ein Vorfall <em>bekannt</em> wird — deshalb werden auffällige Ereignisse hier sichtbar
+    gemacht. Die Zählung liegt nur im Arbeitsspeicher und beginnt bei jedem Serverstart neu;
+    was festgehalten werden soll, gehört ins Vorfallprotokoll darunter.</p>
+    <div id="hm-sec-alerts"></div>
+    <ul id="hm-sec-events" class="hm-list"></ul>
+
+    <h3 class="hm-sub">Zugriffsprotokoll</h3>
+    <p class="hm-hint">Hält fest, welche Schülerdaten das System verlassen haben und wann —
+    geöffnete Dateien, Kurs- und Abgaben-Exporte, Auskünfte. Da es genau ein Konto gibt,
+    das von einer Person genutzt wird, beantwortet das Protokoll das <em>Was</em>, nicht
+    das <em>Wer</em>. Es benennt Schülerdateien und ist damit selbst personenbezogen:
+    eigene Frist von <span id="hm-acc-days">90</span> Tagen, kürzer als die der Abgaben.</p>
+    <ul id="hm-acc-list" class="hm-list"></ul>
+
+    <h3 class="hm-sub">Vorfallprotokoll</h3>
+    <p class="hm-hint">Nach Art. 33 Abs. 5 ist <strong>jede</strong> Verletzung zu
+    dokumentieren — auch eine, die nicht gemeldet werden muss.</p>
+    <div id="hm-inc-list" class="hm-erase__result"></div>
+    <details class="hm-inc-new">
+      <summary>Vorfall erfassen</summary>
+      <label class="hm-field">Bekannt geworden am
+        <input type="datetime-local" id="hm-inc-noticed">
+        <small>Leer lassen für „jetzt“. Ab hier laufen die 72 Stunden.</small>
+      </label>
+      <label class="hm-field">Was ist passiert? <span class="hm-req">erforderlich</span>
+        <textarea id="hm-inc-description" rows="3" maxlength="4000"
+          placeholder="Art der Verletzung, betroffenes System, Hergang"></textarea>
+      </label>
+      <label class="hm-field">Betroffene
+        <textarea id="hm-inc-affected" rows="2" maxlength="4000"
+          placeholder="Kategorien und ungefähre Zahl, z. B. „Abgaben einer Klasse, ca. 25 Schülerinnen und Schüler“"></textarea>
+      </label>
+      <label class="hm-field">Wahrscheinliche Folgen
+        <textarea id="hm-inc-consequences" rows="2" maxlength="4000"></textarea>
+      </label>
+      <label class="hm-field">Ergriffene Maßnahmen
+        <textarea id="hm-inc-measures" rows="2" maxlength="4000"></textarea>
+      </label>
+      <button onclick="recordIncident()">Vorfall dokumentieren</button>
+      <div id="hm-inc-msg" class="hm-erase__result"></div>
+    </details>
+  </section>
+
+  <section class="hm-card">
+    <h2>Auskunft (Art. 15)</h2>
+    <p class="hm-hint">Stellt alle zu einer Person gespeicherten Daten zusammen: Abgaben,
+    Prüfstatus, Notizen, Speicherorte, Empfänger und Speicherdauer. Der
+    <strong>vollständige Name</strong> muss angegeben werden — anders als bei der Löschung
+    wird hier nicht unscharf gesucht, damit niemals fremde Daten mit herausgegeben werden.</p>
+    <div class="hm-erase">
+      <input id="hm-disc-name" placeholder="Vollständiger Name, z. B. Max Müller">
+      <button onclick="discloseStudent()">Zusammenstellen</button>
+    </div>
+    <div id="hm-disc-result" class="hm-erase__result"></div>
+  </section>
+
+  <section class="hm-card">
+    <h2>Löschung (Art. 17)</h2>
+    <p class="hm-hint">Löscht alle gespeicherten Uploads, Protokolleinträge und Notizen zu
+    einer Person (DSGVO Art. 17). Auch Dateien in synchronisierten Kursordnern werden
+    gelöscht — die Löschung erreicht Stud.IP / IServ bei der nächsten Synchronisation.
+    Jede Löschung wird im Löschprotokoll vermerkt. Der <strong>vollständige Name</strong>
+    ist erforderlich: Es wird nur exakt übereinstimmend gelöscht, damit eine Eingabe wie
+    „Anna“ nicht die Daten von „Marianna“ mitnimmt. Ähnliche Namen werden als Vorschlag
+    angezeigt.</p>
+    <div class="hm-erase">
+      <input id="hm-erase-name" placeholder="Name, z. B. Max Müller">
+      <button onclick="eraseStudent()">Suchen…</button>
+    </div>
+    <div id="hm-erase-result" class="hm-erase__result"></div>
+  </section>
+</div>
+
+<style>
+  .hm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 1rem; margin-top: 1rem; }
+  .hm-card { border: 1px solid #ddd; border-radius: 8px; padding: 0.9rem 1rem; }
+  .hm-card h2 { margin: 0 0 0.6rem; font-size: 1.02rem; display: flex; align-items: baseline; gap: 0.6rem; }
+  .hm-link { font-size: 0.78rem; font-weight: normal; margin-left: auto; }
+  .hm-list { list-style: none; margin: 0; padding: 0; font-size: 0.86rem; }
+  .hm-list li { padding: 0.25rem 0; border-bottom: 1px solid #f2f2f2; }
+  .hm-list .sub { display: block; font-size: 0.76rem; color: #667; }
+  .hm-list .sub.error { color: #b00; }
+  .hm-badge { font-size: 0.72rem; padding: 0.05rem 0.4rem; border-radius: 999px; color: #fff; margin-left: 0.3rem; }
+  .hm-badge.open { background: #2a8; }
+  .hm-badge.closed { background: #888; }
+  .hm-badge.expired { background: #b55; }
+  .hm-disk { font-size: 0.86rem; margin-bottom: 0.35rem; }
+  .hm-disk__track { height: 0.55rem; background: #eee; border-radius: 999px; overflow: hidden; margin-bottom: 0.6rem; }
+  .hm-disk__fill { height: 100%; width: 0; background: #2a8; }
+  .hm-disk__fill.warn { background: #e0a800; }
+  .hm-disk__fill.crit { background: #b55; }
+  .hm-hint { font-size: 0.8rem; color: #555; }
+  .hm-erase { display: flex; gap: 0.4rem; }
+  .hm-erase input { flex: 1; padding: 0.35rem; font: inherit; font-size: 0.86rem; }
+  .hm-erase__result { margin-top: 0.6rem; font-size: 0.82rem; }
+  .hm-erase__result ul { margin: 0.3rem 0; padding-left: 1.2rem; }
+  .hm-erase__result .danger { color: #b00; }
+  .hm-erase__result button { margin-top: 0.4rem; }
+  .hm-disc__sub { border-top: 1px solid #eee; padding: 0.4rem 0; }
+  .hm-disc__sub b { display: block; }
+  .hm-disc__meta { color: #667; font-size: 0.78rem; }
+  .hm-disc__note { border-left: 2px solid #ddd; padding-left: 0.5rem; margin: 0.25rem 0 0 0.4rem; }
+  .hm-disc__actions { display: flex; gap: 0.4rem; margin-top: 0.6rem; flex-wrap: wrap; }
+  .hm-disc__gap { color: #b00; }
+  .hm-disc__cover { color: #667; font-size: 0.78rem; margin-top: 0.5rem; }
+  .hm-card--wide { grid-column: 1 / -1; }
+  .hm-sub { font-size: 0.92rem; margin: 1.1rem 0 0.4rem; }
+  .hm-alert { border-left: 3px solid #b55; background: #fdf3f3; padding: 0.5rem 0.7rem;
+              margin-bottom: 0.5rem; font-size: 0.84rem; }
+  .hm-alert b { display: block; }
+  .hm-ok { color: #2a8; font-size: 0.84rem; }
+  .hm-field { display: block; margin: 0.6rem 0; font-size: 0.82rem; }
+  .hm-field textarea, .hm-field input { width: 100%; font: inherit; font-size: 0.84rem;
+              padding: 0.35rem; margin-top: 0.2rem; }
+  .hm-field small { display: block; color: #778; font-size: 0.75rem; }
+  .hm-req { color: #b00; font-weight: 600; }
+  .hm-inc-new summary { cursor: pointer; font-size: 0.86rem; margin-top: 0.6rem; }
+  .hm-inc { border-top: 1px solid #eee; padding: 0.5rem 0; font-size: 0.84rem; }
+  .hm-inc__due { font-weight: 600; }
+  .hm-inc__due.over { color: #b00; }
+  .hm-inc__due.soon { color: #b56000; }
+  .hm-inc__done { color: #2a8; }
+  .hm-inc__actions { display: flex; gap: 0.4rem; margin-top: 0.35rem; flex-wrap: wrap; }
+</style>
+
+<script src="/js/home.js?v=<%= assetVersion %>"></script>

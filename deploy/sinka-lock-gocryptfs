@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# Lock the Sinka gocryptfs vault (unmount). The app runs this at logout as:
+#   SINKA_LOCK_CMD=/usr/local/bin/sinka-lock-gocryptfs
+# Reads SINKA_VAULT_MOUNT from the environment. No root needed.
+#
+# Install: sudo install -m 755 deploy/sinka-lock-gocryptfs /usr/local/bin/sinka-lock-gocryptfs
+set -euo pipefail
+: "${SINKA_VAULT_MOUNT:?}"
+
+mountpoint -q "$SINKA_VAULT_MOUNT" || exit 0     # already locked
+
+if fusermount -u "$SINKA_VAULT_MOUNT" 2>/dev/null; then
+  exit 0
+fi
+
+# The mount is busy — something is still inside it (a terminal cd'd in, an open file
+# manager, ...), so a clean unmount is impossible. Detach it lazily: the plaintext view
+# disappears from the filesystem immediately (new access fails, `ls` shows nothing).
+# Caveat: a process still holding a file OPEN can keep reading that one file until it
+# closes it, so close programs using the vault before logging out.
+echo "sinka-lock: $SINKA_VAULT_MOUNT is busy; detaching lazily — close anything using it." >&2
+fusermount -uz "$SINKA_VAULT_MOUNT"

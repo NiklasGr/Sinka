@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sinka — Abgabe</title>
+  <!-- Styles inlined: the static asset directory is gated behind the admin login,
+       and this page is reached by students without one. -->
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; align-items: flex-start;
+           justify-content: center; font-family: system-ui, sans-serif;
+           background: #1f2937; color: #111; padding: 2rem 1rem; }
+    .card { background: #fff; padding: 1.75rem; border-radius: 10px; width: min(30rem, 100%);
+            box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+    h1 { margin: 0 0 .5rem; font-size: 1.25rem; }
+    p.sub { margin: 0 0 1rem; color: #4b5563; font-size: .9rem; }
+    label { display: block; font-size: .8rem; margin: .75rem 0 .25rem; color: #374151; }
+    input[type=text], input[type=file] { width: 100%; padding: .55rem; border: 1px solid #d1d5db; border-radius: 6px; }
+    button { width: 100%; margin-top: 1.1rem; padding: .65rem; border: 0; border-radius: 6px;
+             background: #2563eb; color: #fff; font-size: 1rem; cursor: pointer; }
+    button:hover { background: #1d4ed8; }
+    .msg { min-height: 1.2em; font-size: .85rem; margin-top: .75rem; }
+    .msg.error { color: #991b1b; }
+    .msg.ok { color: #065f46; }
+    .meta { font-size: .8rem; color: #6b7280; margin-top: 1rem; }
+    .results { margin-top: 1rem; font-size: .85rem; }
+    .results li.ok { color: #065f46; }
+    .results li.bad { color: #991b1b; }
+    .receipt { margin-top: 1rem; padding: .7rem; background: #ecfdf5; border: 1px solid #a7f3d0;
+               border-radius: 6px; font-size: .85rem; color: #065f46; }
+    .receipt b { font-family: monospace; font-size: 1.15rem; letter-spacing: .12em; }
+    .hidden { display: none; }
+    /* Art. 13 notice. Deliberately part of the normal reading flow rather than a
+       footnote: it has to be seen before the upload button, not after. */
+    .privacy { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;
+               font-size: .82rem; color: #4b5563; line-height: 1.5; }
+    .privacy h2 { font-size: .85rem; margin: 0 0 .4rem; color: #374151; }
+    .privacy details { margin-top: .6rem; }
+    .privacy summary { cursor: pointer; color: #2563eb; }
+    .privacy summary:hover { text-decoration: underline; }
+    .privacy dl { margin: .75rem 0 0; }
+    .privacy dt { font-weight: 600; color: #374151; margin-top: .6rem; }
+    .privacy dd { margin: .15rem 0 0; }
+    .privacy ul { margin: .15rem 0 0; padding-left: 1.1rem; }
+    .privacy .gap { color: #991b1b; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <% if (state === 'notfound') { %>
+      <h1>Link nicht gefunden</h1>
+      <p class="sub">Dieser Upload-Link ist ungültig oder wurde entfernt.</p>
+
+    <% } else if (state === 'closed') { %>
+      <h1><%= view.name %></h1>
+      <p class="sub">Diese Upload-Sitzung ist geschlossen und nimmt keine Dateien mehr an.</p>
+
+    <% } else { %>
+      <h1><%= view.name %></h1>
+      <p class="sub">Lade hier deine Dateien hoch. Gib deinen Namen an, damit die Abgabe zugeordnet werden kann.</p>
+
+      <!-- Code gate -->
+      <section id="code-section" class="<%= view.unlocked ? 'hidden' : '' %>">
+        <label for="code">Zugangscode</label>
+        <input type="text" id="code" autocomplete="off" autocapitalize="characters" placeholder="Code von der Lehrkraft">
+        <button onclick="unlock()">Freischalten</button>
+        <div id="code-msg" class="msg"></div>
+      </section>
+
+      <!-- Upload form -->
+      <section id="upload-section" class="<%= view.unlocked ? '' : 'hidden' %>">
+        <label for="firstName">Vorname</label>
+        <input type="text" id="firstName" autocomplete="given-name">
+        <label for="lastName">Nachname</label>
+        <input type="text" id="lastName" autocomplete="family-name">
+        <label for="files">Dateien</label>
+        <input type="file" id="files" multiple>
+        <button onclick="submitFiles()">Hochladen</button>
+        <div id="upload-msg" class="msg"></div>
+        <ul id="results" class="results"></ul>
+        <div id="receipt" class="receipt hidden"></div>
+        <div class="meta">
+          Erlaubt: <%= view.allowedExt && view.allowedExt.length ? view.allowedExt.join(', ') : 'alle Dateitypen' %><br>
+          <% if (view.maxFileSizeMb) { %>Max. Dateigröße: <%= view.maxFileSizeMb %> MB · <% } %>
+          Max. Dateien: <%= view.maxFilesPerUser %>
+        </div>
+      </section>
+
+      <!-- Art. 13 GDPR. Short plain-language summary first (Recital 58: a child has to
+           be able to understand it), full text one click away for parents. -->
+      <div class="privacy">
+        <h2>Was mit deinen Daten passiert</h2>
+        <p>
+          Deine Lehrkraft bekommt deinen Vor- und Nachnamen und die Dateien, die du hier
+          hochlädst — mehr nicht. Damit wird deine Abgabe bewertet.
+          <% if (privacy.retentionDays) { %>
+            Nach <%= privacy.retentionDays %> Tagen wird alles automatisch gelöscht.
+          <% } else { %>
+            Gelöscht wird alles, sobald es für die Bewertung nicht mehr gebraucht wird.
+          <% } %>
+          Du darfst jederzeit nachfragen, was gespeichert ist, und verlangen, dass es
+          gelöscht wird.
+        </p>
+
+        <details>
+          <summary>Ausführliche Datenschutzinformationen (Art. 13 DSGVO)</summary>
+          <dl>
+            <dt>Wer ist verantwortlich?</dt>
+            <dd>
+              <% if (privacy.controller) { %>
+                <%= privacy.controller %>
+              <% } else { %>
+                <span class="gap">Noch nicht hinterlegt — bitte bei deiner Schule erfragen.</span>
+              <% } %>
+            </dd>
+
+            <dt>Wen kannst du bei Fragen zum Datenschutz ansprechen?</dt>
+            <dd>
+              <% if (privacy.contact) { %>
+                <%= privacy.contact %>
+              <% } else { %>
+                <span class="gap">Noch nicht hinterlegt — bitte bei deiner Schule erfragen.</span>
+              <% } %>
+            </dd>
+
+            <dt>Wozu werden die Daten verarbeitet?</dt>
+            <dd>Um Abgaben einzusammeln, sie der richtigen Person zuzuordnen und sie zu bewerten.</dd>
+
+            <dt>Auf welcher Rechtsgrundlage?</dt>
+            <dd>
+              Art. 6 Abs. 1 lit. e DSGVO in Verbindung mit § 31 Abs. 1 des Niedersächsischen
+              Schulgesetzes — Wahrnehmung einer Aufgabe im öffentlichen Interesse
+              (Bildungsauftrag der Schule).
+            </dd>
+
+            <dt>Welche Daten werden gespeichert?</dt>
+            <dd>
+              Vor- und Nachname, die hochgeladenen Dateien mit ihrem Inhalt und Dateinamen,
+              die Dateigröße, der Zeitpunkt der Abgabe und der Abgabebeleg. Deine
+              IP-Adresse wird <strong>nicht</strong> gespeichert.
+            </dd>
+
+            <dt>Wer bekommt die Daten?</dt>
+            <dd>
+              <ul>
+                <% privacy.recipients.forEach(function (r) { %>
+                  <li><%= r %></li>
+                <% }); %>
+              </ul>
+            </dd>
+
+            <dt>Wie lange werden sie gespeichert?</dt>
+            <dd>
+              <% if (privacy.retentionDays) { %>
+                Dateien, Abgabeprotokolle und zugehörige Notizen werden automatisch
+                gelöscht, sobald sie älter als <%= privacy.retentionDays %> Tage sind.
+              <% } else { %>
+                Es ist keine automatische Löschfrist eingestellt. Die Daten werden
+                gelöscht, sobald sie für die Bewertung nicht mehr erforderlich sind.
+              <% } %>
+            </dd>
+
+            <dt>Welche Rechte hast du?</dt>
+            <dd>
+              Auskunft über die gespeicherten Daten (Art. 15), Berichtigung (Art. 16),
+              Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18) und Widerspruch
+              gegen die Verarbeitung (Art. 21). Wende dich dafür an die oben genannte
+              Kontaktstelle. Außerdem kannst du dich bei der Landesbeauftragten für den
+              Datenschutz Niedersachsen beschweren (Art. 77).
+            </dd>
+
+            <dt>Musst du diese Daten angeben?</dt>
+            <dd>
+              Die Angabe des Namens ist nötig, damit deine Abgabe dir zugeordnet werden
+              kann. Ohne sie ist eine Abgabe über diese Seite nicht möglich.
+            </dd>
+          </dl>
+        </details>
+      </div>
+
+      <!-- Server values go in a JSON island, not inline JS, so editors don't try to
+           parse the EJS tag as a JavaScript expression. -->
+      <script id="upload-config" type="application/json"><%- JSON.stringify({ token: view.token }) %></script>
+      <script>
+        const CONFIG = JSON.parse(document.getElementById("upload-config").textContent);
+
+        function setMsg(id, text, kind) {
+          const el = document.getElementById(id);
+          el.textContent = text || "";
+          el.className = "msg" + (kind ? " " + kind : "");
+        }
+
+        async function unlock() {
+          const code = document.getElementById("code").value.trim();
+          if (!code) return setMsg("code-msg", "Bitte den Code eingeben", "error");
+          setMsg("code-msg", "Wird geprüft…");
+          try {
+            const res = await fetch(`/api/u/${CONFIG.token}/unlock`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ code }),
+            });
+            const data = await res.json();
+            if (!res.ok) return setMsg("code-msg", data.error || "Fehlgeschlagen", "error");
+            document.getElementById("code-section").classList.add("hidden");
+            document.getElementById("upload-section").classList.remove("hidden");
+          } catch (e) {
+            setMsg("code-msg", "Netzwerkfehler", "error");
+          }
+        }
+
+        async function submitFiles() {
+          const firstName = document.getElementById("firstName").value.trim();
+          const lastName = document.getElementById("lastName").value.trim();
+          const files = document.getElementById("files").files;
+          document.getElementById("results").innerHTML = "";
+          if (!firstName || !lastName) return setMsg("upload-msg", "Bitte Vor- und Nachnamen eingeben", "error");
+          if (!files.length) return setMsg("upload-msg", "Mindestens eine Datei auswählen", "error");
+
+          const fd = new FormData();
+          fd.append("firstName", firstName);
+          fd.append("lastName", lastName);
+          for (const f of files) fd.append("files", f);
+
+          setMsg("upload-msg", "Wird hochgeladen…");
+          try {
+            const res = await fetch(`/api/u/${CONFIG.token}/files`, { method: "POST", body: fd });
+            const data = await res.json();
+            if (!res.ok) return setMsg("upload-msg", data.error || "Upload fehlgeschlagen", "error");
+
+            const list = document.getElementById("results");
+            (data.stored || []).forEach((s) => {
+              const li = document.createElement("li");
+              li.className = "ok";
+              li.textContent = `✓ ${s.originalName}`;
+              list.appendChild(li);
+            });
+            (data.rejected || []).forEach((r) => {
+              const li = document.createElement("li");
+              li.className = "bad";
+              li.textContent = `✗ ${r.originalName} — ${r.reason}`;
+              list.appendChild(li);
+            });
+            const okCount = (data.stored || []).length;
+            setMsg("upload-msg", okCount ? `${okCount} Datei(en) hochgeladen` : "Keine Dateien gespeichert", okCount ? "ok" : "error");
+            // Show the confirmation receipt — proof of submission the student can
+            // screenshot. It is also recorded server-side with each stored file.
+            const receiptEl = document.getElementById("receipt");
+            if (data.receipt) {
+              receiptEl.innerHTML = "";
+              receiptEl.append("Dein Abgabebeleg — als Nachweis aufbewahren: ");
+              const b = document.createElement("b");
+              b.textContent = data.receipt;
+              receiptEl.appendChild(b);
+              receiptEl.classList.remove("hidden");
+            } else {
+              receiptEl.classList.add("hidden");
+            }
+            document.getElementById("files").value = "";
+          } catch (e) {
+            setMsg("upload-msg", "Netzwerkfehler", "error");
+          }
+        }
+      </script>
+    <% } %>
+  </div>
+</body>
+</html>

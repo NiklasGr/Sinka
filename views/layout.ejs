@@ -1,0 +1,106 @@
+<!-- Shared page shell: topbar + nav drawer + settings overlay around a per-page
+     partial (views/partials/<page>.ejs), selected by the `page` variable from
+     src/routes/pages.js. Script URLs carry ?v=<assetVersion> — a per-server-start
+     cache-buster — so a restart always delivers matching frontend JS. -->
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="/css/styles.css">
+  <title>Sinka</title>
+</head>
+
+<body>
+  <div class="topbar">
+    <button class="menu-toggle" onclick="toggleNav()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div><%= title %></div>
+    <button class="settings-toggle" onclick="openSettings()">
+      ⚙️
+    </button>
+  </div>
+
+  <div id="mySidenav" class="sidenav">
+    <a href="/home">Home</a>
+    <a href="/sync">File Sync</a>
+    <a href="/admin-upload">Upload Interface</a>
+    <a href="/review">File Viewer</a>
+  </div>
+
+  <main class="page-content">
+    <%- include('./partials/' + page) %>
+  </main>
+
+  <div id="settingsOverlay" class="settings-overlay" onclick="closeSettings(event)">
+    <div class="settings-panel" onclick="event.stopPropagation()">
+      <button class="close-settings" onclick="closeSettings()">✕</button>
+      <h2>Einstellungen</h2>
+      <p>Die Konfiguration wird auf dem Server gespeichert und gilt sofort.</p>
+      <div class="settings-content">
+        <form id="settingsForm" class="settings-form">
+          <label class="settings-field">
+            <span>Öffentliche Basis-URL</span>
+            <input type="url" name="PUBLIC_BASE_URL" placeholder="https://ihr-host" autocomplete="off" />
+            <small>Absolute URL, unter der Schüler den Server erreichen. Leer lassen, um sie aus der Anfrage abzuleiten.</small>
+          </label>
+          <label class="settings-field">
+            <span>Stud.IP Basis-URL</span>
+            <input type="url" name="STUDIP_BASE_URL" placeholder="https://studip.beispiel.de" autocomplete="off" />
+          </label>
+          <label class="settings-field">
+            <span>IServ WebDAV-URL</span>
+            <input type="url" name="ISERV_WEBDAV_URL" placeholder="https://webdav.beispiel.de" autocomplete="off" />
+          </label>
+          <label class="settings-field">
+            <span>Auto-Sync-Intervall (Minuten)</span>
+            <input type="number" min="1" name="SYNC_INTERVAL_MINUTES" placeholder="leer = nur manuell" autocomplete="off" />
+            <small>Alle registrierten Kurse automatisch alle N Minuten synchronisieren (nur bei angemeldetem Admin / entsperrtem Tresor).</small>
+          </label>
+          <label class="settings-field">
+            <span>Aufbewahrungsfrist (Tage)</span>
+            <input type="number" min="1" name="RETENTION_DAYS" placeholder="leer = unbegrenzt" autocomplete="off" />
+            <small>Hochgeladene Dateien, Abgabeprotokolle und zugehörige Notizen automatisch löschen, sobald sie älter als N Tage sind (DSGVO-Speicherbegrenzung).</small>
+          </label>
+          <label class="settings-field">
+            <span>Automatische Abmeldung nach (Minuten)</span>
+            <input type="number" min="0" name="AUTO_LOGOUT_MINUTES" placeholder="leer = 30 Min." autocomplete="off" />
+            <small>Sperrt den Tresor und beendet die Anmeldung nach dieser Zeit ohne Aktivität (z.&nbsp;B. Tab geschlossen ohne Abmelden). 0 deaktiviert. Wird ausgesetzt, solange eine Upload-Sitzung offen ist oder eine Synchronisation läuft.</small>
+          </label>
+          <label class="settings-field">
+            <span>Verantwortliche Stelle (Schule)</span>
+            <input type="text" name="PRIVACY_CONTROLLER" maxlength="300" placeholder="Musterschule, Musterstraße 1, 12345 Musterstadt" autocomplete="off" />
+            <small>Name und Anschrift der Schule. Wird Schülern auf der Abgabeseite und auf dem Aushang-Poster angezeigt — Art.&nbsp;13 DSGVO verlangt diese Angabe zum Zeitpunkt der Erhebung. Einzeilig, ohne Anführungszeichen.</small>
+          </label>
+          <label class="settings-field">
+            <span>Kontakt für Datenschutzfragen</span>
+            <input type="text" name="PRIVACY_CONTACT" maxlength="300" placeholder="datenschutz@schule.de" autocomplete="off" />
+            <small>Datenschutzbeauftragte Person oder Anlaufstelle, an die sich Schüler und Eltern wenden können.</small>
+          </label>
+          <button type="submit" class="settings-save">Konfiguration speichern</button>
+          <div id="settingsStatus" class="settings-status" role="status"></div>
+        </form>
+
+        <form method="POST" action="/logout" class="logout-form">
+          <button type="submit" class="logout-button">Abmelden</button>
+        </form>
+
+        <div class="danger-zone">
+          <h3>Gefahrenbereich</h3>
+          <p>Setzt Sinka auf den Zustand vor der Installation zurück: löscht die
+          Konfiguration (<code>.env</code>), alle synchronisierten Kursordner,
+          gesammelte Uploads, Abgabeprotokolle, Notizen, Zugangsdaten und
+          Anmeldesitzungen. Der Server fährt danach herunter, bis
+          <code>scripts/install.sh</code> erneut ausgeführt wird.
+          <strong>Dies kann nicht rückgängig gemacht werden.</strong></p>
+          <button type="button" class="danger-button" onclick="hardReset()">Zurücksetzen (Hard Reset)…</button>
+          <div id="hardResetStatus" class="settings-status" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js?v=<%= assetVersion %>"></script>
+</body>
+</html>

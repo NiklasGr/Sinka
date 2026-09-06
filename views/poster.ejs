@@ -1,0 +1,72 @@
+<!-- Print-friendly upload poster: projected or pinned up in the classroom.
+     The access code is filled in client-side from sessionStorage (set by the share
+     popup, which is the only place the plaintext code ever exists) — when unknown,
+     a blank line is printed for the teacher to write it on. -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sinka — Upload poster</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; color: #111;
+           display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .poster { text-align: center; padding: 3rem 2rem; max-width: 42rem; }
+    h1 { font-size: 2.2rem; margin: 0 0 1.5rem; }
+    .qr { width: min(60vw, 22rem); height: auto; image-rendering: pixelated; }
+    .link { font-family: monospace; font-size: 1.15rem; word-break: break-all; margin: 1.25rem 0; }
+    .code-label { font-size: 1.1rem; color: #444; margin-top: 1.5rem; }
+    .code { font-family: monospace; font-size: 2.6rem; letter-spacing: .25em; margin-top: .5rem; min-height: 3rem; }
+    .code.blank { border-bottom: 3px solid #111; width: 14rem; margin: .75rem auto 0; }
+    .deadline { margin-top: 1.5rem; font-size: 1rem; color: #444; }
+    /* The same Art. 13 summary the upload page carries, so the information is also
+       present offline for anyone reading the poster instead of the screen. */
+    .privacy { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ccc;
+               font-size: .78rem; color: #555; line-height: 1.45; text-align: left; }
+    .privacy strong { color: #333; }
+    .privacy .gap { color: #991b1b; }
+    .print-btn { position: fixed; top: 1rem; right: 1rem; padding: .6rem 1.2rem; font-size: 1rem; cursor: pointer; }
+    @media print { .print-btn { display: none; } }
+  </style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">🖨 Drucken</button>
+  <div class="poster">
+    <h1><%= name %></h1>
+    <img class="qr" src="/api/upload-sessions/<%= id %>/qr" alt="QR-Code für den Upload-Link">
+    <div class="link"><%= link %></div>
+    <div class="code-label">Zugangscode:</div>
+    <div class="code blank" id="poster-code"></div>
+    <% if (expiresAt) { %>
+      <div class="deadline">Geöffnet bis <%= new Date(expiresAt * 1000).toLocaleString('de-DE') %></div>
+    <% } %>
+
+    <div class="privacy">
+      <strong>Datenschutz:</strong>
+      Beim Hochladen werden dein Vor- und Nachname sowie die Dateien gespeichert, um die
+      Abgabe zuzuordnen und zu bewerten (Art. 6 Abs. 1 lit. e DSGVO i. V. m. § 31 Abs. 1
+      NSchG). Eine IP-Adresse wird nicht gespeichert.
+      <% if (privacy.retentionDays) { %>
+        Nach <%= privacy.retentionDays %> Tagen wird automatisch gelöscht.
+      <% } %>
+      Verantwortlich:
+      <% if (privacy.controller) { %><%= privacy.controller %><% } else { %><span class="gap">noch nicht hinterlegt</span><% } %>.
+      Fragen zum Datenschutz:
+      <% if (privacy.contact) { %><%= privacy.contact %><% } else { %><span class="gap">noch nicht hinterlegt</span><% } %>.
+      Die vollständigen Hinweise stehen auf der Abgabeseite.
+    </div>
+  </div>
+  <script id="poster-config" type="application/json"><%- JSON.stringify({ id }) %></script>
+  <script>
+    // The share popup stashes the one-time plaintext code under this key before
+    // opening the poster; consume it if present, otherwise leave the write-in line.
+    const posterId = JSON.parse(document.getElementById("poster-config").textContent).id;
+    const code = sessionStorage.getItem("posterCode:" + posterId);
+    if (code) {
+      const el = document.getElementById("poster-code");
+      el.textContent = code;
+      el.classList.remove("blank");
+    }
+  </script>
+</body>
+</html>

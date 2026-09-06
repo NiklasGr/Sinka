@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# Unlock the Sinka gocryptfs vault. gocryptfs is user-mountable, so no root/sudo is
+# needed and the app's environment is inherited directly. The app runs this at login as:
+#   SINKA_UNLOCK_CMD=/usr/local/bin/sinka-unlock-gocryptfs
+#
+# Reads from the environment (set in the app's .env):
+#   SINKA_VAULT_CIPHER   the gocryptfs ciphertext directory (created with `gocryptfs -init`)
+#   SINKA_VAULT_MOUNT    the plaintext mountpoint (== the app's SINKA_VAULT_MOUNT)
+# and the passphrase (= admin login password) from stdin.
+#
+# Requires `user_allow_other` in /etc/fuse.conf so the desktop file manager can see the
+# mount:  echo user_allow_other | sudo tee -a /etc/fuse.conf
+#
+# Install: sudo install -m 755 deploy/sinka-unlock-gocryptfs /usr/local/bin/sinka-unlock-gocryptfs
+set -euo pipefail
+: "${SINKA_VAULT_CIPHER:?} ${SINKA_VAULT_MOUNT:?}"
+
+mountpoint -q "$SINKA_VAULT_MOUNT" && exit 0    # already unlocked
+mkdir -p "$SINKA_VAULT_MOUNT"
+
+# The app sends the passphrase on stdin as a PIPE. We cannot use `-passfile /dev/stdin`
+# because gocryptfs re-opens it by path (/proc/self/fd/0) and re-opening a pipe that way
+# fails with ENXIO. Instead read it into an (exported) variable and hand it to gocryptfs
+# via -extpass, which reads the passphrase from the helper's stdout — so it never appears
+# on any command line.
+IFS= read -r SINKA_GOCRYPTFS_PW || true
+export SINKA_GOCRYPTFS_PW
+exec gocryptfs -allow_other \
+  -extpass printenv -extpass SINKA_GOCRYPTFS_PW \
+  "$SINKA_VAULT_CIPHER" "$SINKA_VAULT_MOUNT"
