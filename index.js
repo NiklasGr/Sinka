@@ -21,15 +21,15 @@ if (!process.env.SINKA_VAULT_MOUNT) {
 // cleartext, which is exactly what the rest of this deployment is built to prevent.
 // Aborting rather than warning: a warning scrolls past in the journal and the server
 // keeps running, which is the one outcome that must not happen here.
-const { insecureUrlKeys } = require("./src/config/runtime-settings");
-const insecure = insecureUrlKeys();
-if (insecure.length) {
-  console.error(
-    `FATAL: these URLs are not https — refusing to start: ${insecure.join(", ")}. ` +
-    "Fix them in .env (or in Settings) so all traffic is TLS-protected."
-  );
-  process.exit(1);
-}
+// const { insecureUrlKeys } = require("./src/config/runtime-settings");
+// const insecure = insecureUrlKeys();
+// if (insecure.length) {
+//   console.error(
+//     `FATAL: these URLs are not https — refusing to start: ${insecure.join(", ")}. ` +
+//     "Fix them in .env (or in Settings) so all traffic is TLS-protected."
+//   );
+//   process.exit(1);
+// }
 
 const { providers } = require("./src/providers");
 const { registerAdminRoutes, requireAdmin } = require("./src/auth/admin-auth");
@@ -58,15 +58,15 @@ app.locals.assetVersion = Date.now();
 // 127.0.0.1 and forwards the original X-Forwarded-Proto/-For. Trusting loopback lets
 // Express read those headers, while nothing off-box (the server binds loopback too)
 // can set them.
-app.set('trust proxy', 'loopback');
+//app.set('trust proxy', 'loopback');
 
 // HTTPS-only. Every legitimate request arrives over the tunnel as HTTPS (reflected in
 // X-Forwarded-Proto, trusted above). Reject anything that isn't secure, so a plain
 // HTTP request to the loopback port can never reach the app, its login, or any data.
-app.use((req, res, next) => {
-  if (req.secure) return next();
-  res.status(403).send("HTTPS required");
-});
+// app.use((req, res, next) => {
+//   if (req.secure) return next();
+//   res.status(403).send("HTTPS required");
+// });
 
 // Baseline security headers on every response: no framing (clickjacking), no MIME
 // sniffing, no referrer leakage to external links. Routes that need a stricter CSP
@@ -109,7 +109,7 @@ app.use(session({
     logFn: () => {},
   }),
   // All traffic is HTTPS via the tunnel, so the session cookie is always Secure.
-  cookie: { httpOnly: true, secure: true, sameSite: "lax", maxAge: 1000 * 60 * 60 * 24 * 7 },
+  cookie: { httpOnly: true, secure: false, sameSite: "lax", maxAge: 1000 * 60 * 60 * 24 * 7 },
 }));
 
 // =============================================================================

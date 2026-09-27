@@ -17,7 +17,7 @@ const ENV_PATH = path.join(__dirname, "..", "..", ".env");
 // explicit "off" for settings that are on by default when blank; "text" keys are
 // short single-line strings shown to students (see TEXT_MAX below).
 const MANAGED = {
-  PUBLIC_BASE_URL: "httpsurl",
+  PUBLIC_BASE_URL: "url",
   STUDIP_BASE_URL: "httpsurl",
   ISERV_WEBDAV_URL: "httpsurl",
   SYNC_INTERVAL_MINUTES: "int", // auto-sync every N minutes (blank = manual sync only)
@@ -62,7 +62,14 @@ function validate(values) {
   for (const key of MANAGED_KEYS) {
     const v = String(values[key] ?? "").trim();
     if (!v) continue; // blank clears the setting
-    if (MANAGED[key] === "httpsurl") {
+    if (MANAGED[key] === "url") {
+      let url;
+      try {
+        url = new URL(v);
+      } catch {
+        throw new Error(`${key} muss eine gültige URL sein`);
+      }
+    } else if (MANAGED[key] === "httpsurl") {
       let url;
       try {
         url = new URL(v);

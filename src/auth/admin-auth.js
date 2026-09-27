@@ -99,7 +99,6 @@ function registerAdminRoutes(app) {
       );
       return res.status(401).render("login", { error: "Benutzername oder Passwort ist falsch." });
     }
-
     // The verified password also unlocks the at-rest vault (runs SINKA_UNLOCK_CMD).
     // If the vault can't be mounted, refuse rather than run with data inaccessible.
     if (!vault.unlock(password)) {
