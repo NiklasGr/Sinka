@@ -107,7 +107,7 @@ async function traverse(ctx, folderUrl, segments, files, folders, limit) {
   folders.push({ path: segments.join("/"), id: folderUrl });
   const folderPath = decodeURIComponent(new URL(folderUrl).pathname).replace(/\/+$/, "");
 
-  const entries = await limit(() => propfind(ctx, folderUrl, 1));
+  const entries = await limit(() => propfind(ctx, `${folderUrl}/`, 1));
 
   // Files first, then all subfolders side by side. The results land in a different order
   // than the previous depth-first walk produced; nothing depends on it — the engine
